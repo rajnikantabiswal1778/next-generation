@@ -378,13 +378,13 @@ class BackupEngine {
         try {
             const mongoose   = require('mongoose');
             this._sourceConn = mongoose.createConnection(sourceUri, {
-                serverSelectionTimeoutMS: 15000,
+                serverSelectionTimeoutMS: 3000,
                 maxPoolSize: 3,
             });
             await this._sourceConn.asPromise();
             logger.info('BackupEngine: connected to source MongoDB', { category: 'backup' });
         } catch (e) {
-            logger.error('BackupEngine: source connection failed', { category: 'backup', error: e.message });
+            logger.warn('BackupEngine: source connection skipped (' + e.message + ')', { category: 'backup' });
             return;
         }
 

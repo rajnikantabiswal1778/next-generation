@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This project was programmed by the Next Generation team.
  * If you encounter any problems, open an Issue or log into the Discord server:
  * https://discord.gg/BhJStSa89s
@@ -55,7 +55,7 @@ function load() {
 async function loadFromMongoDB() {
     try {
         const mongoose = require('mongoose');
-        if (mongoose.connection.readyState < 1) return;
+        if (mongoose.connection.readyState !== 1) return;
         const GlobalConfig = require('../systems/schemas/GlobalConfig');
         const doc = await GlobalConfig.findOne({ key: GLOBAL_CONFIG_KEY }).lean();
         if (doc?.data && Object.keys(doc.data).length > 0) {

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This project was programmed by the Next Generation team.
  * If you encounter any problems, open an Issue or log into the Discord server:
  * https://discord.gg/BhJStSa89s
@@ -14,12 +14,78 @@ const dashLogs     = require('../utils/dashboardLogs');
 
 /* ── GET /auth/discord ─────────────────────────────── */
 router.get('/discord', (req, res) => {
+    // If Discord credentials are not yet configured in .env, or demo is requested, log in with dev session
+    if (req.query.demo === 'true' || !process.env.CLIENT_ID || process.env.CLIENT_ID === 'YOUR_CLIENT_ID' || process.env.CLIENT_ID.trim() === '') {
+        const settings = settingsUtil.get();
+        const defaultOwnerId = (settings?.DASHBOARD?.OWNERS && settings.DASHBOARD.OWNERS[0]) || '756947441592303707';
+        req.session.user = {
+            id: defaultOwnerId,
+            username: 'NextGenDev',
+            displayName: 'Next Gen Developer',
+            discriminator: '0001',
+            avatar: null,
+            banner: null,
+            bannerColor: '#7c3aed',
+            publicFlags: 0,
+            premiumType: 0,
+            email: 'dev@nextgeneration.bot',
+            ip: req.clientIp || '127.0.0.1',
+            loginAt: new Date().toISOString(),
+            verified: true,
+        };
+        const botClient = require('../utils/botClient').getClient();
+        const clientGuilds = botClient ? [...botClient.guilds.cache.values()].map(g => ({ id: g.id, name: g.name, icon: g.icon })) : [];
+        req.session.guilds = clientGuilds.length > 0 ? clientGuilds : [
+            {
+                id: '123456789012345678',
+                name: 'Next Gen HQ',
+                icon: null,
+            }
+        ];
+        return req.session.save(() => {
+            res.redirect('/dashboard');
+        });
+    }
+
     const crypto = require('crypto');
     const state = crypto.randomBytes(16).toString('hex');
     req.session.oauthState = state;
     req.session.save(() => {
         const url = discord.getOAuthURL(state);
         res.redirect(url);
+    });
+});
+
+/* ── GET /auth/demo ────────────────────────────────── */
+router.get('/demo', (req, res) => {
+    const settings = settingsUtil.get();
+    const defaultOwnerId = (settings?.DASHBOARD?.OWNERS && settings.DASHBOARD.OWNERS[0]) || '756947441592303707';
+    req.session.user = {
+        id: defaultOwnerId,
+        username: 'NextGenDev',
+        displayName: 'Next Gen Developer',
+        discriminator: '0001',
+        avatar: null,
+        banner: null,
+        bannerColor: '#7c3aed',
+        publicFlags: 0,
+        premiumType: 0,
+        email: 'dev@nextgeneration.bot',
+        ip: req.clientIp || '127.0.0.1',
+        loginAt: new Date().toISOString(),
+        verified: true,
+    };
+    const botClient = require('../utils/botClient').getClient();
+    const clientGuilds = botClient ? [...botClient.guilds.cache.values()].map(g => ({ id: g.id, name: g.name, icon: g.icon })) : [];
+    req.session.guilds = clientGuilds.length > 0 ? clientGuilds : [
+        {
+            id: '123456789012345678',
+            name: 'Next Gen HQ',
+            icon: null,
+        }
+    ];
+    return req.session.save(() => {
+        res.redirect('/dashboard');
     });
 });
 

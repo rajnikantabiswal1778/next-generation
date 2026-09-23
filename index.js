@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This project was programmed by the Next Generation team.
  * If you encounter any problems, open an Issue or log into the Discord server:
  * https://discord.gg/BhJStSa89s
@@ -34,6 +34,7 @@ const client = new Client({
     ]
 });
 
+client.setMaxListeners(50);
 client.commands = new Collection();
 client.systems = new Collection();
 client.textCommands = new Collection();
@@ -83,6 +84,10 @@ loadFiles('systems', (file, system) => {
 });
 
 const updateSlashCommands = async () => {
+    if (!process.env.DISCORD_TOKEN || !process.env.CLIENT_ID) {
+        logger.warn('DISCORD_TOKEN or CLIENT_ID not set — skipping slash commands update', { category: 'discord' });
+        return;
+    }
     const commands = [...client.commands.values()]
         .filter(cmd => cmd.data)
         .map(cmd => cmd.data.toJSON());
@@ -368,9 +373,18 @@ function formatTimeSince(timestamp) {
         await require('./utils/settings').loadFromMongoDB();
         await guildDb.loadFromMongoDB();
     } catch (e) {
-        logger.error('MongoDB bootstrap error', { category: 'db', error: e.message, stack: e.stack });
+        logger.warn('MongoDB bootstrap warning: ' + e.message, { category: 'db' });
     }
-    client.login(process.env.DISCORD_TOKEN);
+
+    if (process.env.DISCORD_TOKEN && process.env.DISCORD_TOKEN.trim().length > 10) {
+        try {
+            await client.login(process.env.DISCORD_TOKEN);
+        } catch (loginErr) {
+            logger.warn(`Discord bot login skipped: ${loginErr.message}. The web dashboard is fully running.`, { category: 'discord' });
+        }
+    } else {
+        logger.warn('DISCORD_TOKEN not provided in .env — Discord bot client is offline. Web dashboard is fully accessible.', { category: 'discord' });
+    }
 })();
 
 /*

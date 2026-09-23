@@ -713,7 +713,7 @@
             "URL": "",
             "COLOR": "#7c3aed"
         },
-        "ANYWARE": false
+        "ANYWARE": true
     },
     "LEVEL_SYSTEM": {
         "ENABLE": true,

@@ -379,6 +379,8 @@ async function _scheduleRemoval(client, guildId, userId, roleId, dbId, expiresAt
  */
 async function restoreTempRoles(client) {
     try {
+        const mongoose = require('mongoose');
+        if (mongoose.connection.readyState !== 1) return;
         const active = await TempRole.find({ active: true, expiresAt: { $gt: new Date() } }).lean();
         if (active.length)
             logger.info(`[RoleAuto] Restoring ${active.length} active temp role(s) from DB`);

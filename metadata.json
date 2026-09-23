@@ -1,0 +1,8 @@
+{
+  "name": "Next Generation Discord Bot & Dashboard",
+  "description": "Next Generation Discord Bot with full-featured web dashboard for protection, ticketing, embeds, automations, and leveling systems.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -18,17 +18,19 @@ const logger   = require('../../utils/logger');
 async function connect() {
     if (mongoose.connection.readyState >= 1) return; // already connected/connecting
 
-    const uri = process.env.MONGODB;
+    mongoose.set('bufferCommands', false); // CRITICAL: fail fast, don't hang
+
+    const uri = process.env.MONGODB_URI || process.env.MONGODB;
     if (!uri) {
-        logger.error('MONGODB environment variable is not set!', { category: 'db' });
-        process.exit(1);
+        logger.warn('MONGODB environment variable is not set — falling back to local/in-memory cache', { category: 'db' });
+        return;
     }
 
     try {
         await mongoose.connect(uri, {
-            serverSelectionTimeoutMS: 15_000,
+            serverSelectionTimeoutMS: 5_000,
             socketTimeoutMS:          60_000,
-            connectTimeoutMS:         15_000,
+            connectTimeoutMS:         5_000,
             heartbeatFrequencyMS:     10_000,
             retryWrites:              true,
             retryReads:               true,
@@ -36,8 +38,7 @@ async function connect() {
         });
         logger.db('Connected to MongoDB Atlas');
     } catch (err) {
-        logger.error('MongoDB connection error', { category: 'db', error: err.message, stack: err.stack });
-        process.exit(1);
+        logger.warn(`MongoDB connection error: ${err.message} — falling back to local/in-memory cache`, { category: 'db' });
     }
 
     mongoose.connection.on('disconnected', () =>

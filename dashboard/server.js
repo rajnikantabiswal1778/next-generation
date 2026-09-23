@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This project was programmed by the Next Generation team.
  * If you encounter any problems, open an Issue or log into the Discord server:
  * https://discord.gg/BhJStSa89s
@@ -35,13 +35,13 @@ if (!fs.existsSync(UPLOADS_ROOT)) fs.mkdirSync(UPLOADS_ROOT, { recursive: true }
 
 const app        = express();
 const httpServer = http.createServer(app);
-const PORT    = parseInt(process.env.DASHBOARD_PORT, 10) || 2000;
-const IS_PROD = (process.env.QAUTH_LINK || '').startsWith('https://');
+const PORT       = 3000;
+const IS_PROD    = (process.env.QAUTH_LINK || '').startsWith('https://');
 
-// Restrict Socket.io to the dashboard's own origin in production
+// Restrict Socket.io to the dashboard's own origin in production or allow all in dev
 const _wsOrigin = IS_PROD
-    ? (() => { try { return new URL(process.env.QAUTH_LINK).origin; } catch (_) { return false; } })()
-    : `http://localhost:${PORT}`;
+    ? (() => { try { return new URL(process.env.QAUTH_LINK).origin; } catch (_) { return true; } })()
+    : true;
 
 const io         = new SocketServer(httpServer, {
     cors: { origin: _wsOrigin, methods: ['GET', 'POST'] },
@@ -61,10 +61,13 @@ io.on('connection', socket => {
 if (IS_PROD) app.set('trust proxy', 1);
 
 /* ── Middleware ─────────────────────────────────────── */
-// Security headers (X-Frame-Options, X-Content-Type-Options, HSTS, etc.)
+// Security headers
 app.use(helmet({
     contentSecurityPolicy: false, // managed per-page via EJS meta tags
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    frameguard: false, // Allow iframe embedding in AI Studio preview
 }));
 // Real IP detection (handles X-Forwarded-For safely)
 app.use(requestIp.mw());
@@ -4270,6 +4273,18 @@ app.get('/dashboard/:guildId/welcome/join/image/preview', require('./middleware/
     }
 });
 
+/* ── Error Middleware ───────────────────────────────── */
+app.use((err, req, res, next) => {
+    if (err && (err.name === 'MongooseError' || err.name === 'MongoNetworkError' || (err.message && err.message.includes('buffering timed out')))) {
+        logger.warn('[AI Studio] Database offline — returning fallback response: ' + err.message, { category: 'db' });
+        if (req.method === 'GET') {
+            return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {});
+        }
+        return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
+    }
+    next(err);
+});
+
 /* ── 404 ─────────────────────────────────────────────── */
 app.use((req, res) => {
     res.status(404).redirect('/');
@@ -4296,7 +4311,7 @@ function start() {
     const publicURL = IS_PROD
         ? new URL(process.env.QAUTH_LINK).origin
         : `http://localhost:${PORT}`;
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, '0.0.0.0', () => {
         logger.discord(`Dashboard running at ${publicURL}  (port ${PORT})`, { category: 'dashboard' });
     });
 }

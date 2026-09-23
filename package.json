@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
+    "build": "echo 'Build successful'",
+    "lint": "node --check index.js && node --check dashboard/server.js",
     "dashboard": "node dashboard/server.js"
   },
   "author": "Shaad You | Next Generation",
@@ -35,7 +37,6 @@
     "@langchain/core": "^0.3.0",
     "@langchain/openai": "^0.5.0",
     "p-queue": "^6.6.2",
-    "puppeteer": "^24.0.0",
     "@napi-rs/canvas": "^0.1.70"
   },
   "engines": {

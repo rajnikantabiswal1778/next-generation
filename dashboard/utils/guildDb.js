@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Per-guild database helper — write-through cache backed by MongoDB.
  *
  * Every guild gets its own folder for JSON fallback:
@@ -87,7 +87,7 @@ async function _writeToMongo(guildId, filename, data) {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
         const mongoose = require('mongoose');
-        if (mongoose.connection.readyState < 1) return;
+        if (mongoose.connection.readyState !== 1) return;
         const schemas = require('../../systems/schemas');
 
         // ── Guild document fields ─────────────────────────────────────────
@@ -352,7 +352,7 @@ async function readAsync(guildId, filename = 'settings', defaultValue = {}) {
 async function _fetchFromMongo(guildId, filename) {
     try {
         const mongoose = require('mongoose');
-        if (mongoose.connection.readyState < 1) return null;
+        if (mongoose.connection.readyState !== 1) return null;
         const schemas = require('../../systems/schemas');
 
         const GUILD_FIELD_MAP = {
@@ -495,7 +495,7 @@ function write(guildId, filename = 'settings', data = {}) {
 async function loadFromMongoDB() {
     try {
         const mongoose = require('mongoose');
-        if (mongoose.connection.readyState < 1) return;
+        if (mongoose.connection.readyState !== 1) return;
         const schemas = require('../../systems/schemas');
 
         // ── Guild documents ───────────────────────────────────────────────
